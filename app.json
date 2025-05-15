@@ -9,14 +9,39 @@
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.buckybarter.app",
+      "associatedDomains": [
+        "applinks:buckybarter.firebaseapp.com",
+        "applinks:auth.expo.io"
+      ]
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
-      "edgeToEdgeEnabled": true
+      "edgeToEdgeEnabled": true,
+      "package": "com.buckybarter.app",
+      "intentFilters": [
+        {
+          "action": "VIEW",
+          "autoVerify": true,
+          "data": [
+            {
+              "scheme": "https",
+              "host": "*.buckybarter.firebaseapp.com",
+              "pathPrefix": "/"
+            },
+            {
+              "scheme": "https",
+              "host": "*.auth.expo.io",
+              "pathPrefix": "/@theoluo/BuckyBarter"
+            }
+          ],
+          "category": ["BROWSABLE", "DEFAULT"]
+        }
+      ]
     },
     "web": {
       "bundler": "metro",
@@ -37,6 +62,18 @@
     ],
     "experiments": {
       "typedRoutes": true
+    },
+    "scheme": "buckybarter",
+    "extra": {
+      "router": {
+        "origin": false
+      },
+      "eas": {
+        "projectId": "your-project-id"
+      },
+      "expo-auth-session": {
+        "redirectUrl": "exp://localhost:19000/--/finishSignUp"
+      }
     }
   }
 }
