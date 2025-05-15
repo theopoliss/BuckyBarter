@@ -1,5 +1,5 @@
 import { Feather, Ionicons } from '@expo/vector-icons';
-import { Stack } from 'expo-router';
+import { Stack, useRouter } from 'expo-router';
 import React from 'react';
 import { Dimensions, FlatList, SafeAreaView, ScrollView, StatusBar, StyleSheet, Text, TextInput, View } from 'react-native';
 import CategoryChip from './CategoryChip';
@@ -12,6 +12,12 @@ const RECENT_ITEM_WIDTH = width * 0.42; // 42% of screen width for recently adde
 const COLUMN_WIDTH = (width - 52) / 2; // 20px padding on each side, 12px gap
 
 export default function HomeScreen() {
+  const router = useRouter();
+
+  const handleItemPress = (itemId: string) => {
+    router.push(`/item/${itemId}`);
+  };
+
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="dark-content" />
@@ -62,7 +68,7 @@ export default function HomeScreen() {
             <ProductCard 
               item={item}
               width={ITEM_WIDTH}
-              onPress={() => console.log(`Selected featured item: ${item.id}`)}
+              onPress={() => handleItemPress(item.id)}
             />
           )}
         />
@@ -84,7 +90,7 @@ export default function HomeScreen() {
             <ProductCard 
               item={item}
               width={RECENT_ITEM_WIDTH}
-              onPress={() => console.log(`Selected recent item: ${item.id}`)}
+              onPress={() => handleItemPress(item.id)}
             />
           )}
         />

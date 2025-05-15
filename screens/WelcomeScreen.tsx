@@ -1,9 +1,14 @@
-import { useRouter } from 'expo-router';
-import React from 'react';
+import { Redirect, useRouter } from 'expo-router';
+import React, { useState } from 'react';
 import { Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 const WelcomeScreen = () => {
   const router = useRouter();
+  const [shouldGoToHome, setShouldGoToHome] = useState(false);
+
+  if (shouldGoToHome) {
+    return <Redirect href={'/(tabs)' as any} />;
+  }
 
   const handleSignUp = () => {
     router.push('/signup');
@@ -46,6 +51,13 @@ const WelcomeScreen = () => {
           onPress={handleLogin}
         >
           <Text style={styles.loginButtonText}>Login</Text>
+        </TouchableOpacity>
+        
+        <TouchableOpacity
+          style={styles.skipButton}
+          onPress={() => setShouldGoToHome(true)}
+        >
+          <Text style={styles.skipButtonText}>Skip for now</Text>
         </TouchableOpacity>
       </View>
     </View>
@@ -117,10 +129,19 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     paddingVertical: 16,
     alignItems: 'center',
+    marginBottom: 16,
   },
   loginButtonText: {
     fontSize: 16,
     fontWeight: '600',
+  },
+  skipButton: {
+    alignItems: 'center',
+  },
+  skipButtonText: {
+    fontSize: 16,
+    color: '#666',
+    textDecorationLine: 'underline',
   },
 });
 
