@@ -164,3 +164,8 @@ export const MOCK_ITEMS: Record<string, Item> = {
     createdAt: "1 month ago"
   }
 }; 
+
+// Add default export to satisfy Expo Router
+export default function MockItemsPage() {
+  return null;
+} 

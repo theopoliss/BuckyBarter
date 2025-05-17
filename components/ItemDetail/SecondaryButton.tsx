@@ -22,10 +22,10 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 2,
-    borderColor: '#D92630',
+    borderColor: '#black',
   },
   buttonText: {
-    color: '#D92630',
+    color: 'black',
     fontSize: 16,
     fontWeight: '600',
     fontFamily: 'Inter-SemiBold',
