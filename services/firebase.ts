@@ -2,10 +2,14 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { initializeApp } from 'firebase/app';
 import {
     Auth,
+    createUserWithEmailAndPassword,
     getAuth,
     isSignInWithEmailLink,
+    sendEmailVerification,
+    sendPasswordResetEmail,
     sendSignInLinkToEmail,
-    signInWithEmailLink
+    signInWithEmailLink,
+    User
 } from 'firebase/auth';
 import { FIREBASE_CONFIG } from '../constants/firebase';
 
@@ -90,8 +94,45 @@ export const completeSignInWithEmailLink = async (email: string, link: string) =
   }
 };
 
-// Token storage key for manual persistence
+// Auth token key for manual persistence
 export const AUTH_TOKEN_KEY = '@BuckyBarter:authToken';
+
+// Create a new user with email and password
+export const registerWithEmailAndPassword = async (email: string, password: string): Promise<User> => {
+  try {
+    const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+    
+    // Save email for verification
+    await AsyncStorage.setItem(EMAIL_KEY, email);
+    
+    return userCredential.user;
+  } catch (error) {
+    console.error('Error creating user:', error);
+    throw error;
+  }
+};
+
+// Send verification email to user
+export const sendVerificationEmail = async (user: User): Promise<boolean> => {
+  try {
+    await sendEmailVerification(user);
+    return true;
+  } catch (error) {
+    console.error('Error sending verification email:', error);
+    return false;
+  }
+};
+
+// Send password reset email
+export const sendPasswordReset = async (email: string): Promise<boolean> => {
+  try {
+    await sendPasswordResetEmail(auth, email);
+    return true;
+  } catch (error) {
+    console.error('Error sending password reset email:', error);
+    throw error;
+  }
+};
 
 // Helper to store auth token in AsyncStorage
 export const storeAuthToken = async (token: string) => {

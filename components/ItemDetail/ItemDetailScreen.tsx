@@ -105,7 +105,8 @@ const styles = StyleSheet.create({
     marginBottom: 24,
   },
   buttonsContainer: {
-    marginTop: 12,
+    marginTop: 24,
+    marginBottom: 16,
     gap: 12,
   },
 });

@@ -10,8 +10,12 @@ const TabSwitch: React.FC<TabSwitchProps> = ({ activeTab, onTabChange }) => {
   return (
     <View style={styles.container}>
       <TouchableOpacity 
-        style={styles.tabButton} 
+        style={[
+          styles.tabButton,
+          activeTab === 'listings' && styles.activeTab
+        ]} 
         onPress={() => onTabChange('listings')}
+        activeOpacity={0.7}
       >
         <Text style={[
           styles.tabText, 
@@ -19,12 +23,15 @@ const TabSwitch: React.FC<TabSwitchProps> = ({ activeTab, onTabChange }) => {
         ]}>
           Your Listings
         </Text>
-        {activeTab === 'listings' && <View style={styles.activeIndicator} />}
       </TouchableOpacity>
       
       <TouchableOpacity 
-        style={styles.tabButton} 
+        style={[
+          styles.tabButton,
+          activeTab === 'offers' && styles.activeTab
+        ]} 
         onPress={() => onTabChange('offers')}
+        activeOpacity={0.7}
       >
         <Text style={[
           styles.tabText, 
@@ -32,7 +39,6 @@ const TabSwitch: React.FC<TabSwitchProps> = ({ activeTab, onTabChange }) => {
         ]}>
           Offers
         </Text>
-        {activeTab === 'offers' && <View style={styles.activeIndicator} />}
       </TouchableOpacity>
     </View>
   );
@@ -41,32 +47,29 @@ const TabSwitch: React.FC<TabSwitchProps> = ({ activeTab, onTabChange }) => {
 const styles = StyleSheet.create({
   container: {
     flexDirection: 'row',
-    marginTop: 20,
-    borderBottomWidth: 1,
-    borderBottomColor: '#E5E7EB',
+    marginTop: 0,
+    paddingHorizontal: 24,
+    marginBottom: 12,
   },
   tabButton: {
-    marginRight: 40,
-    paddingBottom: 10,
-    position: 'relative',
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    borderRadius: 20,
+    marginRight: 8,
+  },
+  activeTab: {
+    backgroundColor: '#F0F0F0',
   },
   tabText: {
-    fontFamily: 'Inter-SemiBold',
-    fontSize: 18,
+    fontSize: 14,
   },
   activeText: {
+    fontFamily: 'Inter-SemiBold',
     color: '#000',
   },
   inactiveText: {
-    color: '#9B9B9B',
-  },
-  activeIndicator: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    height: 2,
-    backgroundColor: '#000',
+    fontFamily: 'Inter-Medium',
+    color: '#6E6E6E',
   },
 });
 

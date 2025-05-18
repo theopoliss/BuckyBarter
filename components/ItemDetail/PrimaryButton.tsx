@@ -8,7 +8,7 @@ interface PrimaryButtonProps {
 
 const PrimaryButton: React.FC<PrimaryButtonProps> = ({ title, onPress }) => {
   return (
-    <TouchableOpacity style={styles.button} onPress={onPress} activeOpacity={0.8}>
+    <TouchableOpacity style={styles.button} onPress={onPress} activeOpacity={0.7}>
       <Text style={styles.buttonText}>{title}</Text>
     </TouchableOpacity>
   );
@@ -17,15 +17,20 @@ const PrimaryButton: React.FC<PrimaryButtonProps> = ({ title, onPress }) => {
 const styles = StyleSheet.create({
   button: {
     backgroundColor: '#D92630',
-    height: 56,
+    height: 52,
     borderRadius: 12,
     justifyContent: 'center',
     alignItems: 'center',
+    paddingHorizontal: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
   },
   buttonText: {
     color: 'white',
     fontSize: 16,
-    fontWeight: '600',
     fontFamily: 'Inter-SemiBold',
   },
 });

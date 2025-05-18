@@ -79,10 +79,11 @@ const styles = StyleSheet.create({
   },
   content: {
     flex: 1,
-    paddingHorizontal: 24,
+    paddingHorizontal: 0,
   },
   listContainer: {
-    paddingTop: 12,
-    paddingBottom: 100, // Add extra space at bottom for FAB
+    paddingTop: 4,
+    paddingHorizontal: 24,
+    paddingBottom: 100,
   },
 }); 

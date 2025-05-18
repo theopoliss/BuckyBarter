@@ -37,6 +37,10 @@ const LoginScreen = () => {
     router.push('/welcome');
   };
 
+  const handleForgotPassword = () => {
+    router.push('/forgot-password');
+  };
+
   return (
     <View style={styles.container}>
       <TouchableOpacity
@@ -89,6 +93,14 @@ const LoginScreen = () => {
           ) : (
             <Text style={styles.continueButtonText}>Continue</Text>
           )}
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={styles.forgotPasswordButton}
+          onPress={handleForgotPassword}
+          disabled={loading}
+        >
+          <Text style={styles.forgotPasswordText}>Forgot Password?</Text>
         </TouchableOpacity>
       </View>
 
@@ -152,6 +164,15 @@ const styles = StyleSheet.create({
     padding: 16,
     fontSize: 16,
     marginBottom: 16,
+  },
+  forgotPasswordButton: {
+    alignSelf: 'flex-end',
+    marginTop: 16,
+  },
+  forgotPasswordText: {
+    color: '#0066cc',
+    fontSize: 14,
+    fontFamily: 'Inter-Regular',
   },
   continueButton: {
     backgroundColor: '#333',

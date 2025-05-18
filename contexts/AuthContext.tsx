@@ -14,10 +14,10 @@ import React, {
 } from 'react';
 import {
   auth,
-  checkSignInLink,
-  completeSignInWithEmailLink,
+  registerWithEmailAndPassword,
   removeAuthToken,
-  sendSignInLink,
+  sendPasswordReset,
+  sendVerificationEmail,
   storeAuthToken
 } from '../services/firebase';
 
@@ -26,9 +26,9 @@ interface AuthContextType {
   user: User | null;
   loading: boolean;
   login: (email: string, password: string) => Promise<void>;
-  sendLoginLink: (email: string) => Promise<boolean>;
-  completeLoginWithLink: (email: string, link: string) => Promise<void>;
-  isAuthLink: (link: string) => boolean;
+  register: (email: string, password: string) => Promise<User>;
+  sendVerification: (user: User) => Promise<boolean>;
+  sendPasswordReset: (email: string) => Promise<boolean>;
   logout: () => Promise<void>;
   error: string | null;
   clearError: () => void;
@@ -79,8 +79,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
-  // Send a login link to the user's email
-  const sendLoginLink = async (email: string) => {
+  // Register a new user with email and password
+  const register = async (email: string, password: string) => {
     setError(null);
     if (!email.endsWith('.edu')) {
       const msg = 'Email must be a .edu email address';
@@ -90,16 +90,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     
     try {
       setLoading(true);
-      const result = await sendSignInLink(email);
-      if (!result) {
-        const msg = 'Failed to send login link';
-        setError(msg);
-        throw new Error(msg);
-      }
-      return true;
+      const user = await registerWithEmailAndPassword(email, password);
+      return user;
     } catch (e: any) {
-      const msg = e.message || 'Failed to send login link';
-      console.error('Send login link error:', msg);
+      const msg = e.message || 'Failed to register';
+      console.error('Registration error:', msg);
       setError(msg);
       throw e;
     } finally {
@@ -107,20 +102,37 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
-  // Check if the provided link is a valid authentication link
-  const isAuthLink = (link: string) => {
-    return checkSignInLink(link);
-  };
-
-  // Complete the login process with the email link
-  const completeLoginWithLink = async (email: string, link: string) => {
+  // Send email verification
+  const sendVerification = async (user: User) => {
     setError(null);
     try {
       setLoading(true);
-      await completeSignInWithEmailLink(email, link);
+      return await sendVerificationEmail(user);
     } catch (e: any) {
-      const msg = e.message || 'Failed to complete login';
-      console.error('Complete login error:', msg);
+      const msg = e.message || 'Failed to send verification email';
+      console.error('Verification error:', msg);
+      setError(msg);
+      throw e;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Send password reset email
+  const handleSendPasswordReset = async (email: string) => {
+    setError(null);
+    if (!email) {
+      const msg = 'Email is required';
+      setError(msg);
+      throw new Error(msg);
+    }
+    
+    try {
+      setLoading(true);
+      return await sendPasswordReset(email);
+    } catch (e: any) {
+      const msg = e.message || 'Failed to send password reset email';
+      console.error('Password reset error:', msg);
       setError(msg);
       throw e;
     } finally {
@@ -153,9 +165,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         user, 
         loading, 
         login, 
-        sendLoginLink, 
-        completeLoginWithLink,
-        isAuthLink, 
+        register,
+        sendVerification,
+        sendPasswordReset: handleSendPasswordReset,
         logout, 
         error, 
         clearError 

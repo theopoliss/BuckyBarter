@@ -17,6 +17,8 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingTop: 16,
+    paddingBottom: 12,
+    paddingHorizontal: 24,
   },
   title: {
     fontFamily: 'Inter-Bold',

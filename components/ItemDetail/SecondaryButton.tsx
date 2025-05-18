@@ -8,7 +8,7 @@ interface SecondaryButtonProps {
 
 const SecondaryButton: React.FC<SecondaryButtonProps> = ({ title, onPress }) => {
   return (
-    <TouchableOpacity style={styles.button} onPress={onPress} activeOpacity={0.8}>
+    <TouchableOpacity style={styles.button} onPress={onPress} activeOpacity={0.7}>
       <Text style={styles.buttonText}>{title}</Text>
     </TouchableOpacity>
   );
@@ -16,18 +16,17 @@ const SecondaryButton: React.FC<SecondaryButtonProps> = ({ title, onPress }) => 
 
 const styles = StyleSheet.create({
   button: {
-    backgroundColor: 'transparent',
-    height: 56,
+    backgroundColor: '#F0F0F0',
+    height: 52,
     borderRadius: 12,
     justifyContent: 'center',
     alignItems: 'center',
-    borderWidth: 2,
-    borderColor: '#black',
+    paddingHorizontal: 16,
+    borderWidth: 0,
   },
   buttonText: {
-    color: 'black',
+    color: '#000',
     fontSize: 16,
-    fontWeight: '600',
     fontFamily: 'Inter-SemiBold',
   },
 });
