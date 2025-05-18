@@ -18,8 +18,7 @@ export default function MessagesScreen() {
 
   const handleMessagePress = (id: string) => {
     console.log(`Message ${id} pressed`);
-    // Navigate to message detail screen
-    // router.push(`/message/${id}`);
+    router.push(`/chat/${id}`);
   };
 
   return (

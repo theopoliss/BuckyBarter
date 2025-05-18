@@ -22,7 +22,18 @@ const MessageCard: React.FC<MessageCardProps> = ({ message, onPress }) => {
           <Text style={styles.timestamp}>{message.timestamp}</Text>
         </View>
         
-        <Text style={styles.itemTitle}>{message.itemTitle}</Text>
+        <View style={styles.itemRow}>
+          <Text style={styles.itemTitle}>{message.itemTitle}</Text>
+          <View style={[
+            styles.typeBadge,
+            message.type === 'buying' ? styles.buyingBadge : styles.sellingBadge
+          ]}>
+            <Text style={[
+              styles.typeBadgeText,
+              message.type === 'buying' ? styles.buyingText : styles.sellingText
+            ]}>{message.type}</Text>
+          </View>
+        </View>
         
         <Text 
           style={[styles.message, message.unread && styles.unreadMessage]} 
@@ -71,11 +82,40 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#6E6E6E',
   },
+  itemRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 4,
+  },
   itemTitle: {
     fontFamily: 'Inter-Medium',
     fontSize: 14,
     color: '#505050',
-    marginBottom: 4,
+    marginRight: 8,
+  },
+  typeBadge: {
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  buyingBadge: {
+    backgroundColor: '#E6F2FF',
+  },
+  sellingBadge: {
+    backgroundColor: '#FFF0E6',
+  },
+  typeBadgeText: {
+    fontFamily: 'Inter-Medium',
+    fontSize: 10,
+    textTransform: 'capitalize',
+  },
+  buyingText: {
+    color: '#0066cc',
+  },
+  sellingText: {
+    color: '#D92630',
   },
   message: {
     fontFamily: 'Inter-Regular',
