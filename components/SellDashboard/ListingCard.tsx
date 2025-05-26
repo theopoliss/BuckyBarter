@@ -1,31 +1,52 @@
+import { Timestamp } from 'firebase/firestore';
 import React from 'react';
 import { Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import { Listing } from '../../MY_LISTINGS';
+import { Listing } from '../../services/firestore';
 
 interface ListingCardProps {
   listing: Listing;
   onPress: (id: string) => void;
 }
 
+const formatDate = (timestamp: Timestamp | any): string => {
+  if (timestamp && typeof timestamp.toDate === 'function') {
+    return timestamp.toDate().toLocaleDateString('en-US', {
+      year: 'numeric', month: 'short', day: 'numeric'
+    });
+  }
+  if (timestamp && timestamp.seconds) {
+    return new Date(timestamp.seconds * 1000).toLocaleDateString('en-US', {
+        year: 'numeric', month: 'short', day: 'numeric'
+    });
+  }
+  return 'Date not available';
+};
+
 const ListingCard: React.FC<ListingCardProps> = ({ listing, onPress }) => {
+  const imageUri = listing.imageUrls && listing.imageUrls.length > 0 
+    ? listing.imageUrls[0] 
+    : 'https://via.placeholder.com/80x80.png?text=No+Image';
+
+  const unreadOffersCount = 0;
+
   return (
     <View style={styles.container}>
       <TouchableOpacity 
         style={styles.card} 
-        onPress={() => onPress(listing.id)}
+        onPress={() => onPress(listing.listingId)}
         activeOpacity={0.7}
       >
-        <Image source={{ uri: listing.imageUri }} style={styles.thumbnail} />
+        <Image source={{ uri: imageUri }} style={styles.thumbnail} />
         
         <View style={styles.content}>
-          <Text style={styles.title}>{listing.title}</Text>
-          <Text style={styles.price}>${listing.price}</Text>
-          <Text style={styles.timestamp}>Posted {listing.postedAt}</Text>
+          <Text style={styles.title} numberOfLines={2}>{listing.title}</Text>
+          <Text style={styles.price}>${listing.price.toFixed(2)}</Text>
+          <Text style={styles.timestamp}>Posted {formatDate(listing.createdAt)}</Text>
         </View>
 
-        {listing.unreadOffersCount > 0 && (
+        {unreadOffersCount > 0 && (
           <View style={styles.badge}>
-            <Text style={styles.badgeText}>{listing.unreadOffersCount}</Text>
+            <Text style={styles.badgeText}>{unreadOffersCount}</Text>
           </View>
         )}
       </TouchableOpacity>
@@ -54,6 +75,7 @@ const styles = StyleSheet.create({
     height: 80,
     borderRadius: 4,
     marginRight: 12,
+    backgroundColor: '#f0f0f0',
   },
   content: {
     justifyContent: 'center',

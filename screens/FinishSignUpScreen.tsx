@@ -2,11 +2,11 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import { ActivityIndicator, Alert, Linking, StyleSheet, Text, View } from 'react-native';
 import { useAuth } from '../contexts/AuthContext';
-import { getStoredEmail } from '../services/firebase';
+import { checkSignInLink, completeSignInWithEmailLink, getStoredEmail } from '../services/firebase';
 
 const FinishSignUpScreen = () => {
   const router = useRouter();
-  const { completeLoginWithLink, isAuthLink, loading, error } = useAuth();
+  const { loading, error } = useAuth();
   const [verifying, setVerifying] = useState(true);
   const [email, setEmail] = useState<string | null>(null);
   const [verificationError, setVerificationError] = useState<string | null>(null);
@@ -75,7 +75,7 @@ const FinishSignUpScreen = () => {
           return;
         }
 
-        const isValid = isAuthLink(authLink);
+        const isValid = checkSignInLink(authLink);
         debug.push(`Is valid auth link: ${isValid}`);
 
         if (!isValid) {
@@ -86,11 +86,11 @@ const FinishSignUpScreen = () => {
         }
 
         // Complete the sign-in process
-        await completeLoginWithLink(storedEmail, authLink);
+        await completeSignInWithEmailLink(storedEmail, authLink);
         debug.push('Sign-in completed successfully');
         
         // Navigate to home page on success
-        router.replace('/home');
+        router.replace('/(tabs)');
 
       } catch (err: any) {
         const errorMsg = `Authentication error: ${err.message || 'Unknown error'}`;

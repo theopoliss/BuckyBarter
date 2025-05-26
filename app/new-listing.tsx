@@ -2,6 +2,8 @@ import { Feather } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import React, { useEffect, useMemo, useState } from 'react';
 import {
+    ActivityIndicator,
+    Alert,
     KeyboardAvoidingView,
     Platform,
     Pressable,
@@ -15,14 +17,25 @@ import {
 } from 'react-native';
 import { CATEGORIES } from '../MY_LISTINGS';
 
+// Firestore integration
+import { useAuth } from '../contexts/AuthContext';
+import { addListing, Listing } from '../services/firestore';
+
 export default function NewListingScreen() {
   const router = useRouter();
+  const { user } = useAuth(); // Get the authenticated user
+
   const [title, setTitle] = useState('');
   const [priceInput, setPriceInput] = useState('');
   const [displayPrice, setDisplayPrice] = useState('');
   const [category, setCategory] = useState('');
   const [description, setDescription] = useState('');
+  const [condition, setCondition] = useState<Listing['condition']>('Good'); // Default condition
+  const [imageUrls, setImageUrls] = useState<string[]>([]); // Placeholder for image URLs
+
   const [showCategoryPicker, setShowCategoryPicker] = useState(false);
+  const [showConditionPicker, setShowConditionPicker] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Format price with $ sign
   useEffect(() => {
@@ -52,26 +65,54 @@ export default function NewListingScreen() {
     return (
       title.trim() !== '' && 
       priceInput.trim() !== '' && 
+      parseFloat(priceInput) > 0 && // Ensure price is valid
       category !== '' && 
-      description.trim() !== ''
+      description.trim() !== '' &&
+      condition !== undefined
+      // Add image validation if necessary: imageUrls.length > 0
     );
-  }, [title, priceInput, category, description]);
+  }, [title, priceInput, category, description, condition]);
 
-  const handlePostListing = () => {
-    // Only proceed if form is valid
-    if (!isFormValid) return;
-    
-    // Here you would typically save the listing data
-    console.log({ 
-      title, 
-      price: parseFloat(priceInput), 
-      category, 
-      description 
-    });
-    
-    // Navigate back to the sell dashboard
-    router.back();
+  const handlePostListing = async () => {
+    if (!isFormValid) {
+      Alert.alert('Incomplete Form', 'Please fill all required fields correctly.');
+      return;
+    }
+    if (!user) {
+      Alert.alert('Authentication Error', 'You must be logged in to post a listing.');
+      // router.push('/login'); // Optionally redirect to login
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      const listingData: Omit<Listing, 'listingId' | 'createdAt' | 'updatedAt' | 'status' | 'viewCount' | 'searchKeywords'> = {
+        sellerUid: user.uid,
+        title: title.trim(),
+        description: description.trim(),
+        price: parseFloat(priceInput),
+        category,
+        condition,
+        imageUrls, // Will be empty for now, add image upload later
+        // isTradeable and location can be added as optional fields later
+      };
+
+      const newListingId = await addListing(listingData);
+      Alert.alert('Success', 'Your listing has been posted successfully!');
+      // Reset form or navigate
+      router.back(); 
+      // Consider resetting form state here if staying on the page
+      // setTitle(''); setPriceInput(''); setCategory(''); setDescription(''); setCondition('Good'); setImageUrls([]);
+
+    } catch (error: any) {
+      console.error('Error posting listing:', error);
+      Alert.alert('Error', error.message || 'Failed to post listing. Please try again.');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
+
+  const conditionOptions: Listing['condition'][] = ['New', 'Like New', 'Good', 'Fair', 'Poor'];
 
   return (
     <SafeAreaView style={styles.container}>
@@ -79,7 +120,7 @@ export default function NewListingScreen() {
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={styles.keyboardAvoidView}
       >
-        <ScrollView style={styles.scrollView}>
+        <ScrollView style={styles.scrollView} keyboardShouldPersistTaps="handled">
           <View style={styles.header}>
             <TouchableOpacity 
               onPress={() => router.back()}
@@ -100,6 +141,7 @@ export default function NewListingScreen() {
               placeholder="Enter Title"
               value={title}
               onChangeText={setTitle}
+              editable={!isSubmitting}
             />
 
             <Text style={styles.label}>Price</Text>
@@ -109,18 +151,20 @@ export default function NewListingScreen() {
               keyboardType="numeric"
               value={displayPrice}
               onChangeText={handlePriceChange}
+              editable={!isSubmitting}
             />
 
             <Text style={styles.label}>Category</Text>
             <Pressable 
               style={styles.input} 
-              onPress={() => setShowCategoryPicker(!showCategoryPicker)}
+              onPress={() => !isSubmitting && setShowCategoryPicker(!showCategoryPicker)}
+              disabled={isSubmitting}
             >
               <View style={styles.selectContainer}>
                 <Text style={[styles.selectText, !category && styles.placeholder]}>
                   {category || "Select Category"}
                 </Text>
-                <Feather name="chevron-down" size={20} color="#999" />
+                <Feather name={showCategoryPicker ? "chevron-up" : "chevron-down"} size={20} color="#999" />
               </View>
             </Pressable>
 
@@ -147,6 +191,43 @@ export default function NewListingScreen() {
               </View>
             )}
 
+            <Text style={styles.label}>Condition</Text>
+            <Pressable
+              style={styles.input}
+              onPress={() => !isSubmitting && setShowConditionPicker(!showConditionPicker)}
+              disabled={isSubmitting}
+            >
+              <View style={styles.selectContainer}>
+                <Text style={[styles.selectText, !condition && styles.placeholder]}>
+                  {condition || "Select Condition"}
+                </Text>
+                <Feather name={showConditionPicker ? "chevron-up" : "chevron-down"} size={20} color="#999" />
+              </View>
+            </Pressable>
+
+            {showConditionPicker && (
+              <View style={styles.categoryDropdown}>
+                <ScrollView
+                  style={styles.categoryScroll}
+                  showsVerticalScrollIndicator={true}
+                  nestedScrollEnabled={true}
+                >
+                  {conditionOptions.map((cond) => (
+                    <TouchableOpacity
+                      key={cond}
+                      style={styles.categoryOption}
+                      onPress={() => {
+                        setCondition(cond);
+                        setShowConditionPicker(false);
+                      }}
+                    >
+                      <Text style={styles.categoryOptionText}>{cond}</Text>
+                    </TouchableOpacity>
+                  ))}
+                </ScrollView>
+              </View>
+            )}
+
             <Text style={styles.label}>Description</Text>
             <TextInput
               style={styles.textArea}
@@ -156,7 +237,13 @@ export default function NewListingScreen() {
               value={description}
               onChangeText={setDescription}
               textAlignVertical="top"
+              editable={!isSubmitting}
             />
+
+            <Text style={styles.label}>Images (coming soon)</Text>
+            <View style={styles.imageUploadPlaceholder}>
+                <Text style={styles.imageUploadText}>Image upload functionality will be added here.</Text>
+            </View>
           </View>
         </ScrollView>
 
@@ -164,12 +251,16 @@ export default function NewListingScreen() {
           <TouchableOpacity
             style={[
               styles.postButton,
-              !isFormValid && styles.postButtonDisabled
+              (!isFormValid || isSubmitting) && styles.postButtonDisabled
             ]}
             onPress={handlePostListing}
-            disabled={!isFormValid}
+            disabled={!isFormValid || isSubmitting}
           >
-            <Text style={styles.postButtonText}>Post Listing</Text>
+            {isSubmitting ? (
+              <ActivityIndicator color="#fff" />
+            ) : (
+              <Text style={styles.postButtonText}>Post Listing</Text>
+            )}
           </TouchableOpacity>
         </View>
       </KeyboardAvoidingView>
@@ -190,98 +281,133 @@ const styles = StyleSheet.create({
   },
   header: {
     paddingHorizontal: 20,
-    paddingTop: 10,
+    paddingTop: Platform.OS === 'android' ? 25 : 10, // Adjust for status bar on Android
+    paddingBottom: 10,
+    flexDirection: 'row',
+    alignItems: 'center',
   },
   backButton: {
     padding: 4,
-    alignSelf: 'flex-start',
+    // Removed alignSelf: 'flex-start' to keep it in row with title if needed, adjust if title is separate
   },
   titleContainer: {
-    paddingHorizontal: 24,
+    // If headerTitle is part of header, this might not be needed or needs to be adjusted
+    paddingHorizontal: 24, 
     marginBottom: 20,
+    alignItems: 'center', // Center title
   },
   headerTitle: {
-    fontSize: 32,
-    fontFamily: 'Inter-Bold',
-    marginTop: 16,
+    fontFamily: 'Inter-Bold', // Make sure Inter-Bold is loaded
+    fontSize: 24,
+    fontWeight: 'bold', // Fallback if custom font not loaded
   },
   formContainer: {
     paddingHorizontal: 24,
-    paddingTop: 8,
+    paddingBottom: 100, // Ensure space for the button at the bottom
   },
   label: {
+    fontFamily: 'Inter-SemiBold', // Make sure Inter-SemiBold is loaded
     fontSize: 16,
-    fontFamily: 'Inter-Medium',
-    color: '#000',
+    color: '#333',
     marginBottom: 8,
+    marginTop: 16,
   },
   input: {
-    backgroundColor: '#EFEFEF',
-    borderRadius: 8,
-    padding: 16,
-    marginBottom: 24,
+    backgroundColor: '#F0F0F2',
+    borderRadius: 10,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
     fontSize: 16,
-    fontFamily: 'Inter-Regular',
+    fontFamily: 'Inter-Regular', // Make sure Inter-Regular is loaded
+    color: '#333',
+    borderWidth: 1,
+    borderColor: '#E0E0E0',
   },
   selectContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
+    height: 48, // Consistent height with TextInput
   },
   selectText: {
     fontSize: 16,
     fontFamily: 'Inter-Regular',
-    color: '#000',
+    color: '#333',
   },
   placeholder: {
     color: '#999',
   },
   categoryDropdown: {
-    backgroundColor: '#EFEFEF',
+    marginTop: 8,
+    backgroundColor: '#F9F9F9',
     borderRadius: 8,
-    marginTop: -20,
-    marginBottom: 20,
-    maxHeight: 200,
-    zIndex: 10,
+    borderWidth: 1,
+    borderColor: '#E0E0E0',
+    maxHeight: 200, // Limit height
   },
   categoryScroll: {
-    paddingHorizontal: 8,
+    // flex: 1, // if it's within a defined height container (like categoryDropdown)
   },
   categoryOption: {
-    padding: 12,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
     borderBottomWidth: 1,
-    borderBottomColor: '#E5E7EB',
+    borderBottomColor: '#EEE',
   },
   categoryOptionText: {
     fontSize: 16,
     fontFamily: 'Inter-Regular',
+    color: '#333',
   },
   textArea: {
-    backgroundColor: '#EFEFEF',
-    borderRadius: 8,
-    padding: 16,
-    marginBottom: 24,
+    backgroundColor: '#F0F0F2',
+    borderRadius: 10,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
     fontSize: 16,
     fontFamily: 'Inter-Regular',
-    height: 200,
+    color: '#333',
+    borderWidth: 1,
+    borderColor: '#E0E0E0',
+    height: 120, // Default height for multi-line
   },
   buttonContainer: {
     paddingHorizontal: 24,
-    paddingVertical: 16,
+    paddingVertical: 20,
+    backgroundColor: 'white', // Ensure it's not transparent over scrolling content
+    borderTopWidth: 1,
+    borderTopColor: '#E0E0E0',
   },
   postButton: {
-    backgroundColor: '#000',
-    borderRadius: 8,
+    backgroundColor: '#D92630', // Example primary color
+    borderRadius: 10,
     paddingVertical: 16,
     alignItems: 'center',
     justifyContent: 'center',
   },
   postButtonDisabled: {
-    opacity: 0.5,
+    backgroundColor: '#E0E0E0', // Greyed out color
   },
   postButtonText: {
     color: 'white',
-    fontSize: 16,
+    fontSize: 18,
     fontFamily: 'Inter-SemiBold',
+    fontWeight: '600', // Fallback
   },
+  imageUploadPlaceholder: {
+    marginTop: 8,
+    height: 100,
+    borderWidth: 2,
+    borderColor: '#E0E0E0',
+    borderStyle: 'dashed',
+    borderRadius: 10,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#F9F9F9',
+    marginBottom: 20,
+  },
+  imageUploadText: {
+    color: '#999',
+    fontFamily: 'Inter-Regular',
+  }
 }); 

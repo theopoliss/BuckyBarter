@@ -11,7 +11,7 @@ const VerifyScreen = () => {
   useEffect(() => {
     // If the user has verified their email, redirect to home
     if (user?.emailVerified) {
-      router.replace('/home');
+      router.replace('/(tabs)');
     }
   }, [user, router]);
 
@@ -31,7 +31,7 @@ const VerifyScreen = () => {
           [
             {
               text: 'Continue',
-              onPress: () => router.replace('/home')
+              onPress: () => router.replace('/(tabs)')
             }
           ]
         );

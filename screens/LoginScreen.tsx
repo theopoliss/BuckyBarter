@@ -21,8 +21,8 @@ const LoginScreen = () => {
     
     try {
       await login(email, password);
-      // On successful login, navigate to home
-      router.replace('/home');
+      // On successful login, navigate to the main app (tabs layout)
+      router.replace('/(tabs)');
     } catch (err: any) {
       // Error is already set in the auth context
       Alert.alert('Login Failed', error || 'Please check your email and password and try again.');

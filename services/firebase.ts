@@ -26,8 +26,6 @@ export const EMAIL_KEY = '@BuckyBarter:email';
 const getActionCodeUrl = () => {
   // For Expo Go development, use Expo's auth proxy (replace with your username)
   if (__DEV__) {
-    // TODO: Replace 'your-expo-username' with your actual Expo username
-    // You can find this by running 'expo whoami' in the terminal
     return 'https://auth.expo.io/@theoluo/BuckyBarter';
   } else {
     // Production environment - use your app domain

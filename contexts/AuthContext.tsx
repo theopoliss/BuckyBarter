@@ -1,30 +1,31 @@
 // src/context/AuthContext.tsx
 import {
-  onAuthStateChanged,
-  signInWithEmailAndPassword,
-  signOut,
-  User
+    onAuthStateChanged,
+    signInWithEmailAndPassword,
+    signOut,
+    User
 } from 'firebase/auth';
 import React, {
-  createContext,
-  ReactNode,
-  useContext,
-  useEffect,
-  useState,
+    createContext,
+    ReactNode,
+    useContext,
+    useEffect,
+    useState,
 } from 'react';
 import {
-  auth,
-  registerWithEmailAndPassword,
-  removeAuthToken,
-  sendPasswordReset,
-  sendVerificationEmail,
-  storeAuthToken
+    auth,
+    registerWithEmailAndPassword,
+    removeAuthToken,
+    sendPasswordReset,
+    sendVerificationEmail,
+    storeAuthToken
 } from '../services/firebase';
 
 // ─── Context types ────────────────────────────────────────────────────────────
 interface AuthContextType {
   user: User | null;
   loading: boolean;
+  authInitialized: boolean;
   login: (email: string, password: string) => Promise<void>;
   register: (email: string, password: string) => Promise<User>;
   sendVerification: (user: User) => Promise<boolean>;
@@ -41,14 +42,16 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const [authInitialized, setAuthInitialized] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   // Listen for auth changes
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async currentUser => {
       setUser(currentUser);
+      setLoading(false);
+      setAuthInitialized(true);
       
-      // If user logged in, store token for persistence
       if (currentUser) {
         try {
           const token = await currentUser.getIdToken();
@@ -56,9 +59,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         } catch (e) {
           console.error('Failed to store auth token:', e);
         }
+      } else {
+        await removeAuthToken();
       }
-      
-      setLoading(false);
     });
     return unsubscribe; // cleanup
   }, []);
@@ -164,6 +167,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       value={{ 
         user, 
         loading, 
+        authInitialized,
         login, 
         register,
         sendVerification,
