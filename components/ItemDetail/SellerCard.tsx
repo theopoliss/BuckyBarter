@@ -1,19 +1,25 @@
 import React from 'react';
 import { Image, StyleSheet, Text, View } from 'react-native';
-import { Seller } from '../../app/data/MOCK_ITEMS';
+// import { Seller } from '../../app/data/MOCK_ITEMS'; // No longer using the mock Seller type directly
 
 interface SellerCardProps {
-  seller: Seller;
-  createdAt: string;
+  // seller: Seller; // Old prop
+  name: string;
+  avatarUrl?: string;
+  location?: string;
+  createdAt: string; // This was already a separate prop
 }
 
-const SellerCard: React.FC<SellerCardProps> = ({ seller, createdAt }) => {
+const SellerCard: React.FC<SellerCardProps> = ({ name, avatarUrl, location, createdAt }) => {
+  const defaultAvatar = 'https://via.placeholder.com/56'; // Default placeholder if no avatarUrl
   return (
     <View style={styles.container}>
-      <Image source={{ uri: seller.avatar }} style={styles.avatar} />
+      <Image source={{ uri: avatarUrl || defaultAvatar }} style={styles.avatar} />
       <View style={styles.infoContainer}>
-        <Text style={styles.name}>{seller.name}</Text>
-        <Text style={styles.details}>Posted {createdAt} | {seller.location}</Text>
+        <Text style={styles.name}>{name}</Text>
+        <Text style={styles.details}>
+          Posted {createdAt} {location ? `| ${location}` : ''}
+        </Text>
       </View>
     </View>
   );
@@ -29,6 +35,7 @@ const styles = StyleSheet.create({
     width: 56,
     height: 56,
     borderRadius: 28,
+    backgroundColor: '#e0e0e0', // Background for placeholder
   },
   infoContainer: {
     marginLeft: 12,

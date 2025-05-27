@@ -272,6 +272,78 @@ export const deleteListing = async (listingId: string): Promise<void> => {
   await updateListing(listingId, { status: 'deleted' });
 };
 
+/**
+ * Searches active listings based on keywords.
+ * Keywords are matched against the pre-generated searchKeywords array in each listing.
+ * @param searchText The text to search for.
+ * @param limitCount The number of listings to retrieve.
+ * @param startAfterDoc Optional Firestore DocumentSnapshot to start after for pagination.
+ * @returns An object containing an array of Listing objects and the last visible document.
+ */
+export const searchListings = async (
+  searchText: string,
+  limitCount: number = 10,
+  startAfterDoc?: DocumentSnapshot<Listing>
+): Promise<{ listings: Listing[]; lastVisible?: DocumentSnapshot<Listing> }> => {
+  const keywords = searchText.toLowerCase().split(' ').filter(kw => kw.length > 1);
+  if (keywords.length === 0) {
+    return { listings: [], lastVisible: undefined };
+  }
+
+  let q = query(
+    listingsCollection,
+    where("status", "==", "active"),
+    where("searchKeywords", "array-contains-any", keywords),
+    orderBy("createdAt", "desc"), 
+    limit(limitCount)
+  );
+
+  if (startAfterDoc) {
+    q = query(q, startAfter(startAfterDoc));
+  }
+
+  try {
+    const querySnapshot = await getDocs(q);
+    const listings = querySnapshot.docs.map(doc => doc.data() as Listing);
+    const lastVisible = querySnapshot.docs[querySnapshot.docs.length - 1] as DocumentSnapshot<Listing> | undefined;
+    return { listings, lastVisible };
+  } catch (error) {
+    console.error("Error searching listings:", error);
+    return { listings: [], lastVisible: undefined };
+  }
+};
+
+/**
+ * Retrieves active listings for a specific category, optionally paginated.
+ * @param category The category to filter by.
+ * @param limitCount The number of listings to retrieve.
+ * @param startAfterDoc Optional Firestore DocumentSnapshot to start after for pagination.
+ * @returns An object containing an array of Listing objects and the last visible document.
+ */
+export const getListingsByCategory = async (
+  category: string,
+  limitCount: number = 10,
+  startAfterDoc?: DocumentSnapshot<Listing>
+): Promise<{ listings: Listing[]; lastVisible?: DocumentSnapshot<Listing> }> => {
+  let q = query(
+    listingsCollection,
+    where("status", "==", "active"),
+    where("category", "==", category), 
+    orderBy("createdAt", "desc"),
+    limit(limitCount)
+  );
+
+  if (startAfterDoc) {
+    q = query(q, startAfter(startAfterDoc));
+  }
+
+  const querySnapshot = await getDocs(q);
+  const listings = querySnapshot.docs.map(doc => doc.data() as Listing);
+  const lastVisible = querySnapshot.docs[querySnapshot.docs.length - 1] as DocumentSnapshot<Listing> | undefined;
+  
+  return { listings, lastVisible };
+};
+
 // --- Conversation & Message Functions ---
 
 /**
