@@ -17,6 +17,11 @@ export interface UserProfile {
   bio?: string;
   isVerified: boolean;
   expoPushToken?: string;
+  stats?: {
+    listings: number;
+    sold: number;
+    purchased: number;
+  };
 }
 
 export interface Listing {
@@ -596,6 +601,7 @@ export const updateOfferStatus = async (offerId: string, status: Offer['status']
   }
 };
 
-export { conversationsCollection, db, listingsCollection, offersCollection, serverTimestamp, usersCollection };
+// Re-export Timestamp for use in other parts of the app
+export { Timestamp, conversationsCollection, db, listingsCollection, offersCollection, serverTimestamp, usersCollection };
 
  

@@ -4,6 +4,7 @@ import { Timestamp } from 'firebase/firestore'; // For type checking and convers
 import React, { useEffect, useState } from 'react';
 import {
     ActivityIndicator,
+    Alert,
     Platform,
     SafeAreaView,
     ScrollView,
@@ -17,6 +18,7 @@ import ImageCarousel from '../../components/ItemDetail/ImageCarousel';
 import PrimaryButton from '../../components/ItemDetail/PrimaryButton';
 import SecondaryButton from '../../components/ItemDetail/SecondaryButton';
 import SellerCard from '../../components/ItemDetail/SellerCard';
+import { useAuth } from '../../contexts/AuthContext'; // Import useAuth
 import { Listing, UserProfile, getListingById, getOrCreateConversation, getUserProfile } from '../../services/firestore';
 
 const styles = StyleSheet.create({
@@ -131,13 +133,10 @@ const getConditionColor = (condition: Listing['condition']): string => {
   }
 };
 
-// Placeholder for the current authenticated user's ID
-// TODO: Replace this with your actual method of getting the current user's ID
-const MOCK_CURRENT_USER_ID = 'userTest123'; // Example: replace with actual auth user ID
-
 export default function ItemDetailScreen() {
   const router = useRouter();
   const { id } = useLocalSearchParams<{ id: string }>();
+  const { user: currentUser, loading: authLoading } = useAuth(); // Get currentUser from useAuth
   const [listing, setListing] = useState<Listing | null>(null);
   const [seller, setSeller] = useState<UserProfile | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -145,7 +144,8 @@ export default function ItemDetailScreen() {
   const [isProcessingAction, setIsProcessingAction] = useState(false); // For loading state on button press
 
   // Determine if the current user is the seller
-  const isCurrentUserTheSeller = listing?.sellerUid === MOCK_CURRENT_USER_ID;
+  const currentUserId = currentUser?.uid;
+  const isCurrentUserTheSeller = listing?.sellerUid === currentUserId;
 
   useEffect(() => {
     if (id) {
@@ -180,48 +180,41 @@ export default function ItemDetailScreen() {
   }, [id]);
 
   const handleMessageSeller = async () => {
-    if (!listing || !listing.sellerUid || !MOCK_CURRENT_USER_ID || isCurrentUserTheSeller) {
-      console.log('Cannot message seller: missing data or user is the seller.');
-      // Optionally, show an alert to the user
+    if (!listing || !listing.sellerUid || !currentUserId || isCurrentUserTheSeller) {
+      console.log('Cannot message seller: missing data, user not logged in, or user is the seller.');
       return;
     }
     if (isProcessingAction) return;
     setIsProcessingAction(true);
     try {
-      // Ensure sellerUid and currentUserId are different
-      if (listing.sellerUid === MOCK_CURRENT_USER_ID) {
-        alert("You cannot message yourself."); // Or some other UI indication
+      if (listing.sellerUid === currentUserId) {
+        Alert.alert("Error", "You cannot message yourself.");
         setIsProcessingAction(false);
         return;
       }
 
-      const conversation = await getOrCreateConversation(listing.listingId, MOCK_CURRENT_USER_ID, listing.sellerUid);
+      const conversation = await getOrCreateConversation(listing.listingId, currentUserId, listing.sellerUid);
       console.log('Conversation created/retrieved:', conversation.conversationId);
-      // TODO: Navigate to the chat screen
-      // router.push(`/chat/${conversation.conversationId}` as any);
-      alert(`Navigate to chat: /chat/${conversation.conversationId}`); // Placeholder navigation
+      router.push(`/chat/${conversation.conversationId}` as any);
     } catch (e: any) {
       console.error("Error creating or getting conversation:", e);
-      alert("Error starting chat. Please try again.");
+      Alert.alert("Error", "Error starting chat. Please try again.");
     } finally {
       setIsProcessingAction(false);
     }
   };
 
   const handleSubmitOffer = async () => {
-    if (!listing || !listing.sellerUid || !MOCK_CURRENT_USER_ID || isCurrentUserTheSeller) {
-      console.log('Cannot submit offer: missing data or user is the seller.');
+    if (!listing || !listing.sellerUid || !currentUserId || isCurrentUserTheSeller) {
+      console.log('Cannot submit offer: missing data, user not logged in, or user is the seller.');
       return;
     }
     if (isProcessingAction) return;
-    // For now, this will just log. Implementation requires an offer input UI.
-    console.log('Submit Offer pressed for listing:', listing.listingId, 'by user:', MOCK_CURRENT_USER_ID);
-    // TODO: Navigate to an offer creation screen/modal
-    // router.push(`/make-offer/${listing.listingId}` as any);
+    console.log('Submit Offer pressed for listing:', listing.listingId, 'by user:', currentUserId);
     alert(`Offer button pressed. Implement offer screen for listing: ${listing.listingId}`);
   };
 
-  if (isLoading) {
+  if (isLoading || authLoading) {
     return (
       <SafeAreaView style={styles.container}>
         <View style={styles.loadingContainer}>
@@ -312,20 +305,22 @@ export default function ItemDetailScreen() {
             {!isCurrentUserTheSeller ? (
               <>
                 <SecondaryButton 
-                  title={isProcessingAction ? "Loading..." : "Message Seller"} 
+                  title={isProcessingAction ? "Processing..." : "Message Seller"} 
                   onPress={handleMessageSeller} 
-                  disabled={isProcessingAction}
+                  disabled={isProcessingAction || authLoading || !currentUser}
                 />
                 <PrimaryButton 
-                  title="Submit Offer" // Add loading state later if involves async op before nav
+                  title="Submit Offer" 
                   onPress={handleSubmitOffer} 
-                  // disabled={isProcessingAction} // Only disable if direct async op here
+                  disabled={isProcessingAction || authLoading || !currentUser}
                 />
               </>
             ) : (
-              // Optionally, show different buttons if the user is the seller
-              // e.g., "Edit Listing", "Mark as Sold"
-              <Text style={{ textAlign: 'center', fontFamily: 'Inter-Regular', color: '#555' }}>This is your listing.</Text>
+              <PrimaryButton 
+                title="Edit Listing (Coming Soon)" 
+                onPress={() => console.log('Edit listing for:', listing?.listingId)} 
+                disabled={true}
+              />
             )}
           </View>
         </View>
