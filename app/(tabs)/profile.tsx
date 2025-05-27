@@ -1,30 +1,28 @@
 import { useRouter } from 'expo-router';
 import React from 'react';
-import { Alert, Image, SafeAreaView, ScrollView, StatusBar, StyleSheet, Text, View } from 'react-native';
-import { CURRENT_USER } from '../../MOCK_USER';
+import { ActivityIndicator, Alert, Image, SafeAreaView, ScrollView, StatusBar, StyleSheet, Text, View } from 'react-native';
+// import { CURRENT_USER } from '../../MOCK_USER'; // Remove mock user
 import ProfileMenuItem from '../../components/ProfileScreen/ProfileMenuItem';
 import StatItem from '../../components/ProfileScreen/StatItem';
+import { useAuth } from '../../contexts/AuthContext'; // Import useAuth
 
 export default function ProfileScreen() {
   const router = useRouter();
-  const user = CURRENT_USER;
+  const { user, logout, loading: authLoading } = useAuth(); // Get user and logout from context
   
   const handleEditProfile = () => {
     console.log('Edit profile pressed');
-    // router.push('/edit-profile');
   };
   
   const handleSettings = () => {
     console.log('Settings pressed');
-    // router.push('/settings');
   };
   
   const handleHelp = () => {
     console.log('Help pressed');
-    // router.push('/help');
   };
-  
-  const handleLogout = () => {
+
+  const handleLogout = async () => { // Make async if logout is async
     Alert.alert(
       'Logout',
       'Are you sure you want to logout?',
@@ -36,15 +34,39 @@ export default function ProfileScreen() {
         {
           text: 'Logout',
           style: 'destructive',
-          onPress: () => {
-            console.log('User logged out');
-            // Implement your logout logic here
-            // router.replace('/welcome');
+          onPress: async () => {
+            try {
+              await logout();
+              // No need to router.replace here, AuthContext and app/index.tsx will handle the redirect
+              console.log('User logged out successfully');
+            } catch (error) {
+              console.error('Logout failed:', error);
+              Alert.alert('Logout Failed', 'An error occurred while logging out. Please try again.');
+            }
           },
         },
       ]
     );
   };
+
+  // Display loading indicator if auth state is still loading or user is not yet available
+  if (authLoading || !user) {
+    return (
+      <SafeAreaView style={[styles.container, styles.centered]}>
+        <ActivityIndicator size="large" color="#D92630" />
+        <Text style={{ marginTop: 10, fontFamily: 'Inter-Regular' }}>Loading profile...</Text>
+      </SafeAreaView>
+    );
+  }
+
+  // Dummy stats if not available on user object directly - replace with actual data source
+  const userStats = {
+    listings: user?.stats?.listings || 0, // Assuming stats might be part of a fuller user profile object fetched separately
+    sold: user?.stats?.sold || 0,
+    purchased: user?.stats?.purchased || 0,
+  };
+  const userJoinedDate = user?.metadata?.creationTime ? new Date(user.metadata.creationTime).toLocaleDateString() : 'N/A';
+  const userLocation = user?.location || 'Location not set'; // Assuming location might be on a fetched profile
 
   return (
     <SafeAreaView style={styles.container}>
@@ -57,19 +79,19 @@ export default function ProfileScreen() {
         
         <View style={styles.profileSection}>
           <Image 
-            source={{ uri: user.avatar }} 
+            source={{ uri: user.photoURL || 'https://via.placeholder.com/100' }} // Use photoURL or a placeholder
             style={styles.profileImage} 
           />
           
-          <Text style={styles.userName}>{user.name}</Text>
-          <Text style={styles.userEmail}>{user.email}</Text>
-          <Text style={styles.userLocation}>{user.location}</Text>
-          <Text style={styles.joinedDate}>Member since {user.joinedDate}</Text>
+          <Text style={styles.userName}>{user.displayName || 'User Name'}</Text>
+          <Text style={styles.userEmail}>{user.email || 'Email not available'}</Text>
+          <Text style={styles.userLocation}>{userLocation}</Text>
+          <Text style={styles.joinedDate}>Member since {userJoinedDate}</Text>
           
           <View style={styles.statsContainer}>
-            <StatItem value={user.stats.listings} label="Listings" />
-            <StatItem value={user.stats.sold} label="Sold" />
-            <StatItem value={user.stats.purchased} label="Purchased" />
+            <StatItem value={userStats.listings} label="Listings" />
+            <StatItem value={userStats.sold} label="Sold" />
+            <StatItem value={userStats.purchased} label="Purchased" />
           </View>
         </View>
         
@@ -105,6 +127,10 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#fff',
+  },
+  centered: { // Added for loading state
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   header: {
     paddingTop: 16,
